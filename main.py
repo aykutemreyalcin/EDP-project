@@ -25,7 +25,7 @@ class Agent(ABC):
     def emit_event(self):
         pass
 
-# ItemStock agent
+# ItemStock agent: Handles adding/removing items from stock
 class ItemStock(Agent):
     def __init__(self, event_manager: EventManager):
         super().__init__(event_manager)
@@ -48,7 +48,7 @@ class ItemStock(Agent):
     def emit_event(self, event_type: str, data=None):
         self.event_manager.emit(event_type, data)
 
-# Sales agent
+# Sales agent: Handles selling items and reducing stock
 class Sales(Agent):
     def __init__(self, event_manager: EventManager):
         super().__init__(event_manager)
@@ -60,19 +60,21 @@ class Sales(Agent):
     def emit_event(self, event_type: str, data=None):
         self.event_manager.emit(event_type, data)
 
-# InventoryCheck agent
+# InventoryCheck agent: Generates inventory reports
 class InventoryCheck(Agent):
     def __init__(self, event_manager: EventManager):
         super().__init__(event_manager)
 
-    def check_stock(self, item_name: str):
-        print(f"Checking stock for {item_name}.")
-        self.emit_event("inventory_checked", {"item_name": item_name})
+    def generate_report(self, stock):
+        print("Generating inventory report:")
+        for item, quantity in stock.items():
+            print(f"{item}: {quantity}")
+        self.emit_event("inventory_report_generated", stock)
 
     def emit_event(self, event_type: str, data=None):
         self.event_manager.emit(event_type, data)
 
-# CustomerRequests agent
+# CustomerRequests agent: Processes customer requests for specific items
 class CustomerRequests(Agent):
     def __init__(self, event_manager: EventManager):
         super().__init__(event_manager)
@@ -99,14 +101,22 @@ if __name__ == "__main__":
     def on_item_added(data):
         print(f"Listener: Item added to stock: {data}")
 
+    def on_item_removed(data):
+        print(f"Listener: Item removed from stock: {data}")
+
     def on_item_sold(data):
         item_stock.remove_item(data["item_name"], data["quantity"])
 
     def on_customer_request(data):
-        inventory_check.check_stock(data["item_name"])
+        if data["item_name"] in item_stock.stock:
+            print(f"Checking stock for {data['item_name']}.")
+            inventory_check.generate_report(item_stock.stock)
+        else:
+            print(f"{data['item_name']} is not available in stock.")
 
     # Subscribe listeners to events
     event_manager.subscribe("item_added", on_item_added)
+    event_manager.subscribe("item_removed", on_item_removed)
     event_manager.subscribe("item_sold", on_item_sold)
     event_manager.subscribe("customer_request", on_customer_request)
 
@@ -114,3 +124,4 @@ if __name__ == "__main__":
     item_stock.add_item("Apples", 50)
     customer_requests.request_item("Apples", 10)
     sales.sell_item("Apples", 10)
+    inventory_check.generate_report(item_stock.stock)
