@@ -86,6 +86,42 @@ class CustomerRequests(Agent):
     def emit_event(self, event_type: str, data=None):
         self.event_manager.emit(event_type, data)
 
+# Event Handler: Listens to and manages events emitted by agents
+class EventHandler:
+    def __init__(self, event_manager: EventManager, item_stock: ItemStock):
+        self.event_manager = event_manager
+        self.item_stock = item_stock
+        self.subscribe_to_events()
+
+    def subscribe_to_events(self):
+        self.event_manager.subscribe("item_added", self.on_item_added)
+        self.event_manager.subscribe("item_sold", self.on_item_sold)
+        self.event_manager.subscribe("customer_request", self.on_customer_request)
+        self.event_manager.subscribe("stock_insufficient", self.on_stock_insufficient)
+        self.event_manager.subscribe("inventory_report_generated", self.on_inventory_report_generated)
+
+    def on_item_added(self, data):
+        print(f"EventHandler: Item added to stock - {data}")
+
+    def on_item_sold(self, data):
+        print(f"EventHandler: Item sold - {data}")
+        self.item_stock.remove_item(data["item_name"], data["quantity"])
+
+    def on_customer_request(self, data):
+        item_name = data["item_name"]
+        quantity = data["quantity"]
+        if self.item_stock.stock.get(item_name, 0) >= quantity:
+            print(f"EventHandler: Customer request can be fulfilled for {item_name}.")
+        else:
+            print(f"EventHandler: Not enough stock for {item_name}.")
+            self.event_manager.emit("stock_insufficient", {"item_name": item_name, "requested": quantity})
+
+    def on_stock_insufficient(self, data):
+        print(f"EventHandler: Insufficient stock for {data['item_name']}. Requested: {data['requested']}.")
+
+    def on_inventory_report_generated(self, data):
+        print(f"EventHandler: Inventory report received.")
+
 # Example usage
 if __name__ == "__main__":
     # Create an EventManager instance
@@ -97,28 +133,8 @@ if __name__ == "__main__":
     inventory_check = InventoryCheck(event_manager)
     customer_requests = CustomerRequests(event_manager)
 
-    # Define listeners
-    def on_item_added(data):
-        print(f"Listener: Item added to stock: {data}")
-
-    def on_item_removed(data):
-        print(f"Listener: Item removed from stock: {data}")
-
-    def on_item_sold(data):
-        item_stock.remove_item(data["item_name"], data["quantity"])
-
-    def on_customer_request(data):
-        if data["item_name"] in item_stock.stock:
-            print(f"Checking stock for {data['item_name']}.")
-            inventory_check.generate_report(item_stock.stock)
-        else:
-            print(f"{data['item_name']} is not available in stock.")
-
-    # Subscribe listeners to events
-    event_manager.subscribe("item_added", on_item_added)
-    event_manager.subscribe("item_removed", on_item_removed)
-    event_manager.subscribe("item_sold", on_item_sold)
-    event_manager.subscribe("customer_request", on_customer_request)
+    # Create EventHandler
+    event_handler = EventHandler(event_manager, item_stock)
 
     # Emit events
     item_stock.add_item("Apples", 50)
