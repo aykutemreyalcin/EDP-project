@@ -122,7 +122,7 @@ class EventHandler:
     def on_inventory_report_generated(self, data):
         print(f"EventHandler: Inventory report received.")
 
-# Example usage
+# Example supermarket EDP system
 if __name__ == "__main__":
     # Create an EventManager instance
     event_manager = EventManager()
@@ -136,8 +136,16 @@ if __name__ == "__main__":
     # Create EventHandler
     event_handler = EventHandler(event_manager, item_stock)
 
-    # Emit events
+    # Sequence of events
+    print("--- Adding items to stock ---")
     item_stock.add_item("Apples", 50)
+    item_stock.add_item("Bananas", 30)
+
+    print("\n--- Customer requests items ---")
     customer_requests.request_item("Apples", 10)
+
+    print("\n--- Selling items ---")
     sales.sell_item("Apples", 10)
+
+    print("\n--- Generating inventory report ---")
     inventory_check.generate_report(item_stock.stock)
