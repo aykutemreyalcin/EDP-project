@@ -19,7 +19,7 @@ The system is integrated with a Flask-based web interface, allowing users to int
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/your-username/supermarket-edp.git
+   git clone https://github.com/aykutemreyalcin/EDP-project
    cd supermarket-edp
    ```
 
@@ -36,7 +36,7 @@ The system is integrated with a Flask-based web interface, allowing users to int
 
 4. **Run the application**:
    ```bash
-   python app.py
+   python main.py
    ```
 
 5. **Access the application**:
